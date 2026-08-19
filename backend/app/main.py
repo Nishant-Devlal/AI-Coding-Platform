@@ -2,12 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.database import Base, engine
+from app.models.problem import Problem
 from app.api.problems import router as problems_router
 
-from app.models.problem import Problem
 
-
-# Create database tables
 Base.metadata.create_all(bind=engine)
 
 
