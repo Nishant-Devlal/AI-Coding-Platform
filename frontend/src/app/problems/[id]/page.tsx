@@ -299,7 +299,8 @@ export default async function ProblemPage({
       <section className="min-h-[600px] p-4">
 
         <CodeEditor
-          starterCode={problem.starter_code ?? ""}
+        problemId={problem.id}
+        starterCode={problem.starter_code ?? ""}
         />
 
       </section>

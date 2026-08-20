@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from app.api.execute import router as execute_router
 from app.database import Base, engine
 from app.models.problem import Problem
+from app.models.test_case import TestCase
 from app.api.problems import router as problems_router
 
 
@@ -26,7 +27,7 @@ app.add_middleware(
 
 
 app.include_router(problems_router)
-
+app.include_router(execute_router)
 
 @app.get("/")
 def root():
