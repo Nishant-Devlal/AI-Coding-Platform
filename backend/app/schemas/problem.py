@@ -14,7 +14,6 @@ class ProblemBase(BaseModel):
     examples: list[dict[str, Any]] | None = None
     starter_code: str | None = None
 
-
 class ProblemResponse(ProblemBase):
     id: int
 
