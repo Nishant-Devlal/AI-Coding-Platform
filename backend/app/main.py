@@ -4,6 +4,7 @@ from app.api.execute import router as execute_router
 from app.database import Base, engine
 from app.models.problem import Problem
 from app.models.test_case import TestCase
+from app.models.submission import Submission
 from app.api.problems import router as problems_router
 
 
