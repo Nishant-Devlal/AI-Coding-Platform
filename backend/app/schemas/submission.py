@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic import BaseModel
 
 
@@ -10,9 +11,9 @@ class RunRequest(BaseModel):
 class TestResult(BaseModel):
     test_case: int
     passed: bool
-    input: str
-    expected_output: str
-    actual_output: str
+    input: Optional[str] = None
+    expected_output: Optional[str] = None
+    actual_output: Optional[str] = None
 
 
 class RunResponse(BaseModel):
