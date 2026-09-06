@@ -21,6 +21,8 @@ export default function CodeEditor({
   const [code, setCode] = useState(starterCode || defaultCode.Python);
   const [output, setOutput] = useState<any>(null);
   const [running, setRunning] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submission, setSubmission] = useState<any>(null);
 
   const handleLanguageChange = (
     event: React.ChangeEvent<HTMLSelectElement>
@@ -39,11 +41,7 @@ export default function CodeEditor({
     try {
       const response = await fetch("http://127.0.0.1:8000/api/run", {
         method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-        },
-
+        headers: {"Content-Type": "application/json",},
         body: JSON.stringify({
           problem_id: problemId,
           language: language,
@@ -54,29 +52,68 @@ export default function CodeEditor({
       if (!response.ok) {
         throw new Error("Execution request failed.");
       }
-
       const data = await response.json();
-
       setOutput(data);
-    } catch (error) {
-      console.error(error);
+    } 
 
+    catch (error) {
+      console.error(error);
       setOutput({
         success: false,
         error: "Could not connect to execution server.",
       });
-    } finally {
+    } 
+
+    finally {
       setRunning(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setSubmission(null);
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/submit",
+        {
+          method: "POST",
+          headers: {"Content-Type": "application/json",},
+          body: JSON.stringify({
+            problem_id: problemId,
+            language: language,
+            code: code,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Submission failed.");
+      }
+      const data = await response.json();
+      setSubmission(data);
+    } 
+
+    catch (error) {
+      console.error(error);
+      setSubmission({
+        success: false,
+        status: "Submission Error",
+        passed: 0,
+        total: 0,
+        runtime: 0,
+      });
+    } 
+
+    finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <div className="flex min-h-[600px] flex-col overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
-
-      {/* Editor Header */}
       <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
 
-        {/* Language Selector */}
         <select
           value={language}
           onChange={handleLanguageChange}
@@ -85,10 +122,8 @@ export default function CodeEditor({
           <option value="Python">Python</option>
         </select>
 
-        {/* Buttons */}
         <div className="flex gap-2">
 
-          {/* Run */}
           <button
             onClick={handleRun}
             disabled={running}
@@ -97,18 +132,17 @@ export default function CodeEditor({
             {running ? "Running..." : "Run"}
           </button>
 
-          {/* Submit - not implemented yet */}
           <button
-            disabled
-            className="cursor-not-allowed rounded-md bg-blue-600 px-4 py-2 text-sm text-white opacity-50"
+            onClick={handleSubmit}
+            disabled={submitting || running}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Submit
+            {submitting ? "Submitting..." : "Submit"}
           </button>
 
         </div>
       </div>
 
-      {/* Code Editor */}
       <textarea
         value={code}
         onChange={(event) => setCode(event.target.value)}
@@ -116,22 +150,18 @@ export default function CodeEditor({
         className="min-h-[450px] flex-1 resize-none bg-slate-950 p-5 font-mono text-sm leading-6 text-slate-200 outline-none"
       />
 
-      {/* Test Results */}
       {output && (
         <div className="border-t border-slate-800 bg-slate-900 p-4">
-
           <h3 className="mb-3 text-sm font-semibold text-white">
             Test Results
           </h3>
 
-          {/* Connection / Server Error */}
           {output.error ? (
             <div className="rounded-md bg-red-950/40 p-3 text-sm text-red-400">
               {output.error}
             </div>
           ) : (
             <>
-              {/* Overall Result */}
               <div className="mb-4 flex items-center justify-between">
 
                 <p className="text-sm text-slate-400">
@@ -150,7 +180,6 @@ export default function CodeEditor({
 
               </div>
 
-              {/* Individual Test Cases */}
               <div className="space-y-2">
 
                 {output.results?.map((result: any) => (
@@ -159,13 +188,11 @@ export default function CodeEditor({
                     className="rounded-md bg-slate-950 p-3 text-sm"
                   >
 
-                    {/* Test Case Status */}
                     <div className="font-medium text-slate-200">
                       {result.passed ? "✅" : "❌"} Test Case{" "}
                       {result.test_case}
                     </div>
 
-                    {/* Only show details if backend provides them */}
                     {result.expected_output != null && (
                       <div className="mt-2 text-slate-500">
                         Expected:{" "}
@@ -193,6 +220,60 @@ export default function CodeEditor({
         </div>
       )}
 
+      {submission && (
+        <div className="border-t border-slate-800 bg-slate-900 p-4">
+          <h3 className="mb-3 text-sm font-semibold text-white">
+            Submission Result
+          </h3>
+          <div className="rounded-lg bg-slate-950 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              
+              <span className="text-sm text-slate-400">
+                Status
+              </span>
+
+              <span
+                className={
+                  submission.success
+                    ? "font-semibold text-green-400"
+                    : "font-semibold text-red-400"
+                }
+              >
+                {submission.success
+                  ? "✅ Accepted"
+                  : `❌ ${submission.status}`}
+              </span>
+
+            </div>
+
+            <div className="mb-2 flex items-center justify-between">
+
+              <span className="text-sm text-slate-400">
+                Test Cases
+              </span>
+
+              <span className="text-sm text-slate-200">
+                {submission.passed} / {submission.total}
+              </span>
+
+            </div>
+
+            <div className="flex items-center justify-between">
+
+              <span className="text-sm text-slate-400">
+                Runtime
+              </span>
+
+              <span className="text-sm text-slate-200">
+                {submission.runtime}s
+              </span>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+      
     </div>
   );
 }

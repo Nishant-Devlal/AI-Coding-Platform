@@ -1,9 +1,15 @@
-from fastapi import APIRouter, Depends
+import time
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
 from app.database import get_db
 from app.models.test_case import TestCase
-from app.schemas.submission import RunRequest, RunResponse
+from app.models.submission import Submission
+from app.schemas.submission import (
+    RunRequest,
+    RunResponse,
+    SubmitRequest,
+    SubmitResponse,
+)
 from app.services.code_executor import execute_python
 
 
@@ -19,7 +25,6 @@ def run_code(
     db: Session = Depends(get_db)
 ):
 
-    # Only Python is supported for now
     if request.language.lower() != "python":
         return {
             "success": False,
@@ -28,7 +33,6 @@ def run_code(
             "results": []
         }
 
-    # Get all test cases for this problem
     test_cases = (
         db.query(TestCase)
         .filter(
@@ -46,7 +50,6 @@ def run_code(
         start=1
     ):
 
-        # Execute user's code
         execution = execute_python(
             request.code,
             test_case.input
@@ -55,7 +58,6 @@ def run_code(
         actual_output = execution["stdout"].strip()
         expected_output = test_case.expected_output.strip()
 
-        # Compare output
         test_passed = (
             execution["success"]
             and actual_output == expected_output
@@ -64,9 +66,6 @@ def run_code(
         if test_passed:
             passed += 1
 
-        # -----------------------------
-        # VISIBLE TEST CASE
-        # -----------------------------
         if not test_case.is_hidden:
 
             results.append({
@@ -80,10 +79,7 @@ def run_code(
                     else execution["stderr"]
                 )
             })
-
-        # -----------------------------
-        # HIDDEN TEST CASE
-        # -----------------------------
+            
         else:
 
             results.append({
@@ -96,4 +92,97 @@ def run_code(
         "passed": passed,
         "total": len(test_cases),
         "results": results
+    }
+    
+    
+@router.post("/submit", response_model=SubmitResponse)
+def submit_code(
+    request: SubmitRequest,
+    db: Session = Depends(get_db)
+):
+
+    # Only Python is supported for now
+    if request.language.lower() != "python":
+        return {
+            "success": False,
+            "status": "Language Not Supported",
+            "passed": 0,
+            "total": 0,
+            "runtime": 0
+        }
+
+    # Get all test cases for this problem
+    test_cases = (
+        db.query(TestCase)
+        .filter(
+            TestCase.problem_id == request.problem_id
+        )
+        .order_by(TestCase.id)
+        .all()
+    )
+
+    if not test_cases:
+        raise HTTPException(
+            status_code=404,
+            detail="No test cases found for this problem"
+        )
+
+    passed = 0
+    status = "Accepted"
+
+    start_time = time.perf_counter()
+
+    for test_case in test_cases:
+
+        execution = execute_python(
+            request.code,
+            test_case.input
+        )
+
+        # Code execution failed
+        if not execution["success"]:
+
+            if "Time Limit Exceeded" in execution["stderr"]:
+                status = "Time Limit Exceeded"
+            else:
+                status = "Runtime Error"
+
+            break
+
+        # Compare output
+        actual_output = execution["stdout"].strip()
+        expected_output = test_case.expected_output.strip()
+
+        if actual_output == expected_output:
+            passed += 1
+        else:
+            status = "Wrong Answer"
+
+    runtime = time.perf_counter() - start_time
+
+    # If every test passed
+    if passed == len(test_cases):
+        status = "Accepted"
+
+    # Save submission
+    submission = Submission(
+        problem_id=request.problem_id,
+        language=request.language,
+        code=request.code,
+        status=status,
+        passed=passed,
+        total=len(test_cases),
+        runtime=f"{runtime:.3f}s"
+    )
+
+    db.add(submission)
+    db.commit()
+    db.refresh(submission)
+
+    return {
+        "success": status == "Accepted",
+        "status": status,
+        "passed": passed,
+        "total": len(test_cases),
+        "runtime": runtime
     }
