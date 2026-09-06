@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.test_case import TestCase
 from app.models.submission import Submission
+from app.models.problem import Problem
 from app.schemas.submission import (
     RunRequest,
     RunResponse,
@@ -101,7 +102,6 @@ def submit_code(
     db: Session = Depends(get_db)
 ):
 
-    # Only Python is supported for now
     if request.language.lower() != "python":
         return {
             "success": False,
@@ -111,7 +111,6 @@ def submit_code(
             "runtime": 0
         }
 
-    # Get all test cases for this problem
     test_cases = (
         db.query(TestCase)
         .filter(
@@ -139,7 +138,6 @@ def submit_code(
             test_case.input
         )
 
-        # Code execution failed
         if not execution["success"]:
 
             if "Time Limit Exceeded" in execution["stderr"]:
@@ -149,7 +147,6 @@ def submit_code(
 
             break
 
-        # Compare output
         actual_output = execution["stdout"].strip()
         expected_output = test_case.expected_output.strip()
 
@@ -160,11 +157,9 @@ def submit_code(
 
     runtime = time.perf_counter() - start_time
 
-    # If every test passed
     if passed == len(test_cases):
         status = "Accepted"
 
-    # Save submission
     submission = Submission(
         problem_id=request.problem_id,
         language=request.language,
@@ -186,3 +181,33 @@ def submit_code(
         "total": len(test_cases),
         "runtime": runtime
     }
+    
+@router.get("/submissions")
+def get_submissions(
+    db: Session = Depends(get_db)
+):
+    submissions = (
+        db.query(Submission, Problem.title)
+        .join(
+            Problem,
+            Submission.problem_id == Problem.id
+        )
+        .order_by(Submission.created_at.desc())
+        .all()
+    )
+
+    return [
+        {
+            "id": submission.id,
+            "problem_id": submission.problem_id,
+            "problem_title": problem_title,
+            "language": submission.language,
+            "code": submission.code,
+            "status": submission.status,
+            "passed": submission.passed,
+            "total": submission.total,
+            "runtime": submission.runtime,
+            "created_at": submission.created_at
+        }
+        for submission, problem_title in submissions
+    ]
