@@ -11,6 +11,18 @@ const defaultCode: Record<string, string> = {
   Python: `def solution():
     # Write your solution here
     pass`,
+
+  "C++": `#include <iostream>
+using namespace std;
+
+int main() {
+    int a, b;
+    cin >> a >> b;
+
+    // Write your solution here
+
+    return 0;
+}`,
 };
 
 export default function CodeEditor({
@@ -120,6 +132,7 @@ export default function CodeEditor({
           className="rounded-md bg-slate-800 px-3 py-2 text-sm text-white outline-none"
         >
           <option value="Python">Python</option>
+          <option value="C++">C++</option>
         </select>
 
         <div className="flex gap-2">

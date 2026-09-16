@@ -11,7 +11,7 @@ from app.schemas.submission import (
     SubmitRequest,
     SubmitResponse,
 )
-from app.services.code_executor import execute_python
+from app.services.code_executor import execute_code
 
 
 router = APIRouter(
@@ -25,14 +25,6 @@ def run_code(
     request: RunRequest,
     db: Session = Depends(get_db)
 ):
-
-    if request.language.lower() != "python":
-        return {
-            "success": False,
-            "passed": 0,
-            "total": 0,
-            "results": []
-        }
 
     test_cases = (
         db.query(TestCase)
@@ -51,7 +43,8 @@ def run_code(
         start=1
     ):
 
-        execution = execute_python(
+        execution = execute_code(
+            request.language,
             request.code,
             test_case.input
         )
@@ -102,15 +95,6 @@ def submit_code(
     db: Session = Depends(get_db)
 ):
 
-    if request.language.lower() != "python":
-        return {
-            "success": False,
-            "status": "Language Not Supported",
-            "passed": 0,
-            "total": 0,
-            "runtime": 0
-        }
-
     test_cases = (
         db.query(TestCase)
         .filter(
@@ -133,7 +117,8 @@ def submit_code(
 
     for test_case in test_cases:
 
-        execution = execute_python(
+        execution = execute_code(
+            request.language,
             request.code,
             test_case.input
         )
