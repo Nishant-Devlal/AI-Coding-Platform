@@ -1,11 +1,9 @@
 import subprocess
 
-
 LANGUAGE_IMAGES = {
     "python": "ai-code-python",
     "c++": "ai-code-cpp",
 }
-
 
 def execute_code(
     language: str,
@@ -37,7 +35,6 @@ def execute_code(
     print(repr(execution_request))
 
     try:
-
         result = subprocess.run(
             [
                 "docker",
@@ -63,7 +60,6 @@ def execute_code(
         }
 
     except subprocess.TimeoutExpired:
-
         return {
             "success": False,
             "stdout": "",

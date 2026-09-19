@@ -13,12 +13,10 @@ from app.schemas.submission import (
 )
 from app.services.code_executor import execute_code
 
-
 router = APIRouter(
     prefix="/api",
     tags=["Execution"]
 )
-
 
 @router.post("/run", response_model=RunResponse)
 def run_code(
@@ -28,9 +26,7 @@ def run_code(
 
     test_cases = (
         db.query(TestCase)
-        .filter(
-            TestCase.problem_id == request.problem_id
-        )
+        .filter(TestCase.problem_id == request.problem_id)
         .order_by(TestCase.id)
         .all()
     )
@@ -38,30 +34,18 @@ def run_code(
     results = []
     passed = 0
 
-    for index, test_case in enumerate(
-        test_cases,
-        start=1
-    ):
-
-        execution = execute_code(
-            request.language,
-            request.code,
-            test_case.input
-        )
-
+    for index, test_case in enumerate(test_cases, start=1):
+        execution = execute_code(request.language, request.code, test_case.input)
         actual_output = execution["stdout"].strip()
         expected_output = test_case.expected_output.strip()
-
         test_passed = (
             execution["success"]
             and actual_output == expected_output
         )
-
         if test_passed:
             passed += 1
-
+            
         if not test_case.is_hidden:
-
             results.append({
                 "test_case": index,
                 "passed": test_passed,
@@ -75,7 +59,6 @@ def run_code(
             })
             
         else:
-
             results.append({
                 "test_case": index,
                 "passed": test_passed
@@ -97,9 +80,7 @@ def submit_code(
 
     test_cases = (
         db.query(TestCase)
-        .filter(
-            TestCase.problem_id == request.problem_id
-        )
+        .filter(TestCase.problem_id == request.problem_id)
         .order_by(TestCase.id)
         .all()
     )
@@ -116,7 +97,6 @@ def submit_code(
     start_time = time.perf_counter()
 
     for test_case in test_cases:
-
         execution = execute_code(
             request.language,
             request.code,
@@ -124,7 +104,6 @@ def submit_code(
         )
 
         if not execution["success"]:
-
             if "Time Limit Exceeded" in execution["stderr"]:
                 status = "Time Limit Exceeded"
             else:
@@ -173,10 +152,7 @@ def get_submissions(
 ):
     submissions = (
         db.query(Submission, Problem.title)
-        .join(
-            Problem,
-            Submission.problem_id == Problem.id
-        )
+        .join(Problem, Submission.problem_id == Problem.id)
         .order_by(Submission.created_at.desc())
         .all()
     )
@@ -196,3 +172,36 @@ def get_submissions(
         }
         for submission, problem_title in submissions
     ]
+    
+@router.get("/submissions/{submission_id}")
+def get_submission(
+    submission_id: int,
+    db: Session = Depends(get_db)
+):
+    result = (
+        db.query(Submission, Problem.title)
+        .join(Problem, Submission.problem_id == Problem.id)
+        .filter(Submission.id == submission_id)
+        .first()
+    )
+
+    if not result:
+        raise HTTPException(
+            status_code=404,
+            detail="Submission not found"
+        )
+
+    submission, problem_title = result
+
+    return {
+        "id": submission.id,
+        "problem_id": submission.problem_id,
+        "problem_title": problem_title,
+        "language": submission.language,
+        "code": submission.code,
+        "status": submission.status,
+        "passed": submission.passed,
+        "total": submission.total,
+        "runtime": submission.runtime,
+        "created_at": submission.created_at
+    }

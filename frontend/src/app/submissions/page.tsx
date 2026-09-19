@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface Submission {
   id: number;
@@ -20,133 +21,228 @@ export default function SubmissionsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSubmissions = async () => {
-      try {
-        const response = await fetch(
-          "http://127.0.0.1:8000/api/submissions"
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch submissions");
-        }
-
-        const data = await response.json();
-
-        setSubmissions(data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchSubmissions();
   }, []);
 
+  const fetchSubmissions = async () => {
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/api/submissions"
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch submissions");
+      }
+
+      const data = await response.json();
+
+      setSubmissions(data);
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    if (status === "Accepted") {
+      return "text-green-400";
+    }
+
+    if (status === "Wrong Answer") {
+      return "text-red-400";
+    }
+
+    if (status === "Runtime Error") {
+      return "text-orange-400";
+    }
+
+    if (status === "Time Limit Exceeded") {
+      return "text-yellow-400";
+    }
+
+    return "text-slate-400";
+  };
+
+  const getStatusIcon = (status: string) => {
+    if (status === "Accepted") return "✓";
+    if (status === "Wrong Answer") return "✕";
+    if (status === "Runtime Error") return "⚠";
+    if (status === "Time Limit Exceeded") return "⏱";
+
+    return "•";
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 p-8 text-white">
-        Loading submissions...
-      </div>
+      <main className="min-h-screen bg-slate-950 text-white">
+        <div className="mx-auto max-w-6xl px-6 py-10">
+
+          <h1 className="text-3xl font-bold">
+            Submission History
+          </h1>
+
+          <p className="mt-2 text-slate-400">
+            Loading your submissions...
+          </p>
+
+        </div>
+      </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
+    <main className="min-h-screen bg-slate-950 text-white">
 
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl px-6 py-10">
 
-        <h1 className="mb-2 text-3xl font-bold">
-          Submission History
-        </h1>
+        {/* Header */}
+        <div className="mb-8">
 
-        <p className="mb-8 text-slate-400">
-          View your previous code submissions.
-        </p>
+          <h1 className="text-3xl font-bold">
+            Submission History
+          </h1>
 
+          <p className="mt-2 text-slate-400">
+            View your previous code submissions and results.
+          </p>
+
+        </div>
+
+        {/* Empty State */}
         {submissions.length === 0 ? (
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-8 text-center">
-            <p className="text-slate-400">
-              No submissions yet.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
 
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-10 text-center">
+
+            <div className="mb-4 text-4xl">
+              📝
+            </div>
+
+            <h2 className="text-xl font-semibold">
+              No submissions yet
+            </h2>
+
+            <p className="mt-2 text-slate-400">
+              Solve a problem and submit your code to see
+              your submission history here.
+            </p>
+
+          </div>
+
+        ) : (
+
+          <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900">
+
+            {/* Table Header */}
+            <div className="hidden grid-cols-6 border-b border-slate-800 bg-slate-950 px-6 py-4 text-sm font-medium text-slate-400 md:grid">
+
+              <div className="col-span-2">
+                Problem
+              </div>
+
+              <div>
+                Language
+              </div>
+
+              <div>
+                Status
+              </div>
+
+              <div>
+                Tests
+              </div>
+
+              <div>
+                Runtime
+              </div>
+
+            </div>
+
+            {/* Submissions */}
             {submissions.map((submission) => (
 
-              <div
+              <Link
                 key={submission.id}
-                className="rounded-xl border border-slate-800 bg-slate-900 p-5"
+                href={`/submissions/${submission.id}`}
+                className="block border-b border-slate-800 px-6 py-5 transition hover:bg-slate-800/40"
               >
 
-                <div className="flex items-center justify-between">
+                <div className="grid gap-4 md:grid-cols-6 md:items-center">
 
+                  {/* Problem */}
+                  <div className="md:col-span-2">
+
+                    <p className="font-semibold text-white">
+                      {submission.problem_title ||
+                        `Problem #${submission.problem_id}`}
+                    </p>
+
+                    <p className="mt-1 text-xs text-slate-500">
+                      Submission #{submission.id}
+                    </p>
+
+                  </div>
+
+                  {/* Language */}
                   <div>
-                    <h2 className="font-semibold">
-                      {submission.problem_title}
-                    </h2>
 
-                    <p className="mt-1 text-sm text-slate-400">
+                    <span className="rounded-md bg-slate-800 px-2 py-1 text-xs text-slate-300">
                       {submission.language}
-                    </p>
+                    </span>
+
                   </div>
 
-                  <span
-                    className={
-                      submission.status === "Accepted"
-                        ? "font-semibold text-green-400"
-                        : "font-semibold text-red-400"
-                    }
-                  >
-                    {submission.status === "Accepted"
-                      ? "✅ Accepted"
-                      : `❌ ${submission.status}`}
-                  </span>
-
-                </div>
-
-                <div className="mt-5 grid grid-cols-3 gap-4 border-t border-slate-800 pt-4">
-
+                  {/* Status */}
                   <div>
-                    <p className="text-xs text-slate-500">
-                      Test Cases
-                    </p>
 
-                    <p className="mt-1 text-sm">
-                      {submission.passed} / {submission.total}
-                    </p>
+                    <span
+                      className={`font-semibold ${getStatusColor(
+                        submission.status
+                      )}`}
+                    >
+                      {getStatusIcon(submission.status)}{" "}
+                      {submission.status}
+                    </span>
+
                   </div>
 
+                  {/* Tests */}
                   <div>
-                    <p className="text-xs text-slate-500">
-                      Runtime
+
+                    <p className="text-sm text-slate-300">
+                      {submission.passed} /{" "}
+                      {submission.total}
                     </p>
 
-                    <p className="mt-1 text-sm">
+                    <p className="text-xs text-slate-500">
+                      test cases
+                    </p>
+
+                  </div>
+
+                  {/* Runtime */}
+                  <div>
+
+                    <p className="text-sm text-slate-300">
                       {submission.runtime}
                     </p>
-                  </div>
 
-                  <div>
                     <p className="text-xs text-slate-500">
-                      Submitted
-                    </p>
-
-                    <p className="mt-1 text-sm">
                       {new Date(
                         submission.created_at
                       ).toLocaleString()}
                     </p>
+
                   </div>
 
                 </div>
 
-              </div>
+              </Link>
 
             ))}
 
           </div>
+
         )}
 
       </div>

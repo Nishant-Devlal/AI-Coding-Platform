@@ -2,19 +2,13 @@ from app.database import SessionLocal
 from app.models.problem import Problem
 from app.models.test_case import TestCase
 
-
 db = SessionLocal()
-
 
 problem = Problem(
     title="Add Two Numbers",
-
     description="Given two integers, calculate and print their sum.",
-
     difficulty="Easy",
-
     topics="Math",
-
     constraints="-10^9 <= a, b <= 10^9",
 
     input_format=(

@@ -2,9 +2,7 @@ from app.database import SessionLocal
 from app.models.problem import Problem
 from app.models.test_case import TestCase
 
-
 db = SessionLocal()
-
 
 test_cases = [
     TestCase(
@@ -37,9 +35,7 @@ test_cases = [
 ]
 
 db.add_all(test_cases)
-
 db.commit()
-
 db.close()
 
 print("Test cases added successfully!")

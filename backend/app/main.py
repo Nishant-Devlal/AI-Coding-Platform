@@ -5,18 +5,17 @@ from app.database import Base, engine
 from app.models.problem import Problem
 from app.models.test_case import TestCase
 from app.models.submission import Submission
+from app.models.user import User
 from app.api.problems import router as problems_router
-
+from app.api.auth import router as auth_router
 
 Base.metadata.create_all(bind=engine)
-
 
 app = FastAPI(
     title="AI Coding Platform API",
     description="Backend API for the AI Coding Platform",
     version="1.0.0"
 )
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,16 +25,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 app.include_router(problems_router)
 app.include_router(execute_router)
+app.include_router(auth_router)
 
 @app.get("/")
 def root():
     return {
         "message": "AI Coding Platform API is running"
     }
-
 
 @app.get("/health")
 def health():

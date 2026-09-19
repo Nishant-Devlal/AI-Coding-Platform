@@ -10,13 +10,10 @@ router = APIRouter(
     tags=["Problems"]
 )
 
-
 @router.get("/", response_model=list[ProblemResponse])
 def get_problems(db: Session = Depends(get_db)):
     problems = db.query(Problem).all()
-
     return problems
-
 
 @router.get("/{problem_id}", response_model=ProblemResponse)
 def get_problem(

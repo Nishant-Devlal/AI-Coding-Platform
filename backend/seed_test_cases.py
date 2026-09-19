@@ -7,11 +7,7 @@ db = SessionLocal()
 
 
 test_cases = [
-
-    # =========================
     # TWO SUM
-    # =========================
-
     TestCase(
         problem_id=1,
         input="[2,7,11,15]\n9",
@@ -40,11 +36,7 @@ test_cases = [
         is_hidden=True
     ),
 
-
-    # =========================
     # VALID PARENTHESES
-    # =========================
-
     TestCase(
         problem_id=2,
         input="()",
@@ -72,14 +64,10 @@ test_cases = [
         expected_output="true",
         is_hidden=True
     )
-    
 ]
 
-
 db.add_all(test_cases)
-
 db.commit()
-
 db.close()
 
 print("Test cases added successfully!")

@@ -17,6 +17,13 @@ export default function Home() {
             Problems
           </Link>
 
+            <Link
+              href="/submissions"
+              className="text-slate-300 transition hover:text-white"
+            >
+              Submissions
+            </Link>
+
           <Link
             href="/contests"
             className="text-slate-300 transition hover:text-white"

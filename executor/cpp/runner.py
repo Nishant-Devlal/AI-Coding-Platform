@@ -3,9 +3,7 @@ import subprocess
 import tempfile
 import os
 
-
 def main():
-
     # Read the complete execution request
     data = sys.stdin.read()
 
@@ -27,7 +25,6 @@ def main():
     )
 
     with tempfile.TemporaryDirectory() as temp_dir:
-
         code_file = os.path.join(
             temp_dir,
             "main.cpp"
@@ -62,17 +59,11 @@ def main():
 
         # Compilation error
         if compile_result.returncode != 0:
-
-            print(
-                compile_result.stderr,
-                file=sys.stderr
-            )
-
+            print(compile_result.stderr, file=sys.stderr)
             sys.exit(1)
 
         # Execute
         try:
-
             result = subprocess.run(
                 [executable],
                 input=input_data,
@@ -82,31 +73,16 @@ def main():
             )
 
             # Program output
-            print(
-                result.stdout,
-                end=""
-            )
+            print(result.stdout, end="")
 
             # Runtime errors
             if result.stderr:
-                print(
-                    result.stderr,
-                    file=sys.stderr
-                )
-
-            sys.exit(
-                result.returncode
-            )
+                print(result.stderr, file=sys.stderr)
+            sys.exit(result.returncode)
 
         except subprocess.TimeoutExpired:
-
-            print(
-                "Time Limit Exceeded",
-                file=sys.stderr
-            )
-
+            print("Time Limit Exceeded", file=sys.stderr)
             sys.exit(124)
-
 
 if __name__ == "__main__":
     main()
