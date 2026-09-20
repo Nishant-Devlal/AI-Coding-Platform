@@ -1,6 +1,29 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+    const [user, setUser] = useState<{
+    id: number;
+    name: string;
+    email: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+    setUser(null);
+  };
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       {/* Navbar */}
@@ -39,14 +62,45 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="flex gap-3">
-          <button className="rounded-lg px-4 py-2 text-slate-300 hover:text-white">
-            Login
-          </button>
+        <div className="flex items-center gap-3">
 
-          <button className="rounded-lg bg-blue-600 px-4 py-2 font-medium hover:bg-blue-700">
-            Sign Up
-          </button>
+          {user ? (
+            <>
+              {/* User name */}
+              <div className="hidden text-sm text-slate-300 sm:block">
+                Hi,{" "}
+                <span className="font-semibold text-white">
+                  {user.name}
+                </span>
+              </div>
+
+              {/* Logout */}
+              <button
+                onClick={handleLogout}
+                className="rounded-lg border border-slate-700 px-4 py-2 text-slate-300 transition hover:bg-slate-900 hover:text-white"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Login */}
+              <Link
+                href="/login"
+                className="rounded-lg px-4 py-2 text-slate-300 transition hover:text-white"
+              >
+                Login
+              </Link>
+
+              {/* Sign Up */}
+              <Link
+                href="/signup"
+                className="rounded-lg bg-blue-600 px-4 py-2 font-medium transition hover:bg-blue-700"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 

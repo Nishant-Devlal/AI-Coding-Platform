@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import jwt
+import os
+from dotenv import load_dotenv
 from pwdlib import PasswordHash
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -16,11 +18,15 @@ router = APIRouter(
     tags=["Authentication"]
 )
 
+load_dotenv()
+
 # Password hashing
 password_hash = PasswordHash.recommended()
 
 # JWT settings
-SECRET_KEY = JWT_SECRET_KEY
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("JWT_SECRET_KEY is not configured")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
