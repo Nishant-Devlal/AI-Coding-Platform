@@ -20,7 +20,7 @@ router = APIRouter(
 password_hash = PasswordHash.recommended()
 
 # JWT settings
-SECRET_KEY = "e19669cb6f3c298e0b9c170485138bc577e77213f7de337a142c538d8d699f13"
+SECRET_KEY = JWT_SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
