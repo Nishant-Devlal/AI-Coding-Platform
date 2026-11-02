@@ -5,13 +5,7 @@ LANGUAGE_IMAGES = {
     "c++": "ai-code-cpp",
 }
 
-def execute_code(
-    language: str,
-    code: str,
-    input_data: str,
-    timeout: int = 5
-):
-
+def execute_code(language: str, code: str, input_data: str, timeout: int = 5):
     language = language.lower()
 
     # Check if language is supported
@@ -24,25 +18,14 @@ def execute_code(
 
     image = LANGUAGE_IMAGES[language]
 
-    execution_request = (
-        code.rstrip()
-        + "\n---INPUT---\n"
-        + input_data.strip()
-        + "\n"
-    )
+    execution_request = (code.rstrip() + "\n---INPUT---\n" + input_data.strip() + "\n")
 
     print("EXECUTION REQUEST:")
     print(repr(execution_request))
 
     try:
         result = subprocess.run(
-            [
-                "docker",
-                "run",
-                "--rm",
-                "-i",
-                image
-            ],
+            ["docker", "run", "--rm", "-i", image],
             input=execution_request.encode("utf-8"),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

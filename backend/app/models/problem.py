@@ -16,8 +16,4 @@ class Problem(Base):
     examples = Column(JSON, nullable=True)
     starter_code = Column(Text, nullable=True)
     
-    test_cases = relationship(
-    "TestCase",
-    back_populates="problem",
-    cascade="all, delete-orphan"
-)
+    test_cases = relationship("TestCase", back_populates="problem", cascade="all, delete-orphan")

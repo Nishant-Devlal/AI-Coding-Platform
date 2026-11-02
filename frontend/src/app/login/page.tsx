@@ -35,7 +35,8 @@ export default function LoginPage() {
       );
 
       const data = await response.json();
-
+      localStorage.setItem("access_token", data.access_token);
+      
       if (!response.ok) {
         throw new Error(
           data.detail || "Invalid email or password"

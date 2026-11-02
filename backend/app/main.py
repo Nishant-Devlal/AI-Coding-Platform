@@ -31,12 +31,8 @@ app.include_router(auth_router)
 
 @app.get("/")
 def root():
-    return {
-        "message": "AI Coding Platform API is running"
-    }
+    return {"message": "AI Coding Platform API is running"}
 
 @app.get("/health")
 def health():
-    return {
-        "status": "healthy"
-    }
+    return {"status": "healthy"}

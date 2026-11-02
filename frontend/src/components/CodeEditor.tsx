@@ -51,32 +51,45 @@ export default function CodeEditor({
     setOutput(null);
 
     try {
+      const token = localStorage.getItem("access_token");
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch("http://127.0.0.1:8000/api/run", {
         method: "POST",
-        headers: {"Content-Type": "application/json",},
+        headers,
         body: JSON.stringify({
           problem_id: problemId,
-          language: language,
-          code: code,
+          language,
+          code,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Execution request failed.");
-      }
       const data = await response.json();
-      setOutput(data);
-    } 
 
-    catch (error) {
+      if (!response.ok) {
+        throw new Error(
+          data.detail || "Code execution failed."
+        );
+      }
+
+      setOutput(data);
+    } catch (error) {
       console.error(error);
+
       setOutput({
         success: false,
-        error: "Could not connect to execution server.",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Could not connect to execution server.",
       });
-    } 
-
-    finally {
+    } finally {
       setRunning(false);
     }
   };
@@ -86,38 +99,60 @@ export default function CodeEditor({
     setSubmission(null);
 
     try {
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        throw new Error("Please log in before submitting your solution.");
+      }
+
       const response = await fetch(
         "http://127.0.0.1:8000/api/submit",
         {
           method: "POST",
-          headers: {"Content-Type": "application/json",},
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({
             problem_id: problemId,
-            language: language,
-            code: code,
+            language,
+            code,
           }),
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Submission failed.");
-      }
       const data = await response.json();
-      setSubmission(data);
-    } 
 
-    catch (error) {
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("user");
+
+          throw new Error(
+            "Your session has expired. Please log in again."
+          );
+        }
+
+        throw new Error(
+          data.detail || "Submission failed."
+        );
+      }
+
+      setSubmission(data);
+    } catch (error) {
       console.error(error);
+
       setSubmission({
         success: false,
-        status: "Submission Error",
+        status:
+          error instanceof Error
+            ? error.message
+            : "Submission Error",
         passed: 0,
         total: 0,
         runtime: 0,
       });
-    } 
-
-    finally {
+    } finally {
       setSubmitting(false);
     }
   };
