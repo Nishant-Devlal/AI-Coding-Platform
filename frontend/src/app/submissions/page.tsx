@@ -19,6 +19,7 @@ interface Submission {
 export default function SubmissionsPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchSubmissions();
@@ -26,20 +27,39 @@ export default function SubmissionsPage() {
 
   const fetchSubmissions = async () => {
     try {
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        setError("Please log in to view your submission history.");
+        return;
+      }
+
       const response = await fetch(
-        "http://127.0.0.1:8000/api/submissions"
+        "http://127.0.0.1:8000/api/submissions",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
 
+      if (response.status === 401) {
+        setError("Your session has expired. Please log in again.");
+        return;
+      }
+
       if (!response.ok) {
-        throw new Error("Failed to fetch submissions");
+        throw new Error("Failed to fetch submissions.");
       }
 
       const data = await response.json();
-
       setSubmissions(data);
-    } catch (error) {
+    } 
+    catch (error) {
       console.error("Error fetching submissions:", error);
-    } finally {
+    } 
+    finally {
       setLoading(false);
     }
   };
