@@ -66,13 +66,16 @@ export default function Home() {
 
           {user ? (
             <>
-              {/* User name */}
-              <div className="hidden text-sm text-slate-300 sm:block">
+              {/* Clickable User Name */}
+              <Link
+                href="/dashboard"
+                className="hidden text-sm text-slate-300 transition hover:text-blue-400 sm:block"
+              >
                 Hi,{" "}
                 <span className="font-semibold text-white">
                   {user.name}
                 </span>
-              </div>
+              </Link>
 
               {/* Logout */}
               <button
