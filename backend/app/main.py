@@ -9,6 +9,7 @@ from app.models.user import User
 from app.api.problems import router as problems_router
 from app.api.auth import router as auth_router
 from app.api.dashboard import router as dashboard_router
+from app.api.progress import router as progress_router
 
 Base.metadata.create_all(bind=engine)
 
@@ -30,6 +31,7 @@ app.include_router(problems_router)
 app.include_router(execute_router)
 app.include_router(auth_router)
 app.include_router(dashboard_router)
+app.include_router(progress_router)
 
 @app.get("/")
 def root():

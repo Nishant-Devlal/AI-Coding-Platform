@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import ActivityHeatmap from "@/components/ActivityHeatmap";
 
 interface DashboardStats {
   total_submissions: number;
@@ -14,6 +15,11 @@ interface DifficultyStats {
   Easy: number;
   Medium: number;
   Hard: number;
+}
+
+interface Activity {
+  date: string;
+  count: number;
 }
 
 interface RecentSubmission {
@@ -36,7 +42,8 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
-  const [dashboard, setDashboard] =useState<DashboardData | null>(null);
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [activity, setActivity] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -62,8 +69,30 @@ export default function DashboardPage() {
         if (!response.ok) {
           throw new Error("Failed to load dashboard.");
         }
+
         const data: DashboardData = await response.json();
         setDashboard(data);
+        try {
+          const activityResponse = await fetch(
+            "http://127.0.0.1:8000/api/progress/activity",
+            {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+
+          if (!activityResponse.ok) {
+            throw new Error("Failed to fetch activity.");
+          }
+          const activityData = await activityResponse.json();
+          setActivity(activityData.activity);
+        } 
+        catch (activityError) {
+          console.error("Activity fetching error:", activityError);
+        }
       } 
       catch (error) {
         console.error("Dashboard error:", error);
@@ -135,28 +164,28 @@ export default function DashboardPage() {
     {
       title: "Problems Solved",
       value: dashboard.stats.problems_solved,
-      icon: "✓",
+      icon: "",
       color: "text-green-400",
     },
 
     {
       title: "Total Submissions",
       value: dashboard.stats.total_submissions,
-      icon: "⌘",
+      icon: "",
       color: "text-blue-400",
     },
 
     {
       title: "Accepted Submissions",
       value: dashboard.stats.accepted_submissions,
-      icon: "★",
+      icon: "",
       color: "text-purple-400",
     },
 
     {
       title: "Acceptance Rate",
       value: `${dashboard.stats.acceptance_rate}%`,
-      icon: "%",
+      icon: "",
       color: "text-yellow-400",
     },
 
@@ -208,6 +237,10 @@ export default function DashboardPage() {
               <p className="mt-2 text-3xl font-bold">{dashboard.difficulty_stats.Hard}</p>
             </div>
           </div>
+        </div>
+
+        <div className="mb-8">
+          <ActivityHeatmap activity={activity} />
         </div>
 
         <div className="rounded-xl border border-slate-800 bg-slate-900">
