@@ -34,11 +34,18 @@ interface RecentSubmission {
   created_at: string;
 }
 
+interface TopicStat {
+  topic: string;
+  solved: number;
+  total: number;
+  progress: number;
+}
 interface DashboardData {
   user_name: string;
   stats: DashboardStats;
   difficulty_stats: DifficultyStats;
   recent_submissions: RecentSubmission[];
+  topic_stats: TopicStat[];
 }
 
 export default function DashboardPage() {
@@ -243,6 +250,60 @@ export default function DashboardPage() {
           <ActivityHeatmap activity={activity} />
         </div>
 
+        <div className="mb-8 rounded-xl border border-slate-800 bg-slate-900 p-6">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold">
+              Topic-wise Progress
+            </h2>
+
+            <p className="mt-2 text-sm text-slate-400">
+              Track your progress across different DSA topics.
+            </p>
+          </div>
+
+          {dashboard.topic_stats.length === 0 ? (
+            <div className="py-8 text-center">
+              <p className="text-slate-400">
+                No topics available yet.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+              {dashboard.topic_stats.map((topic) => (
+                <div
+                  key={topic.topic}
+                  className="rounded-lg border border-slate-800 bg-slate-950 p-4 transition hover:border-slate-700"
+                >
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <h3
+                      className="truncate text-sm font-medium text-white"
+                      title={topic.topic}
+                    >
+                      {topic.topic}
+                    </h3>
+
+                    <span className="shrink-0 text-xs font-semibold text-blue-400">
+                      {topic.progress}%
+                    </span>
+                  </div>
+
+                  <div className="h-2 overflow-hidden rounded-full bg-slate-800">
+                    <div
+                      className="h-full rounded-full bg-blue-500 transition-all duration-500"
+                      style={{ width: `${topic.progress}%` }}
+                    />
+                  </div>
+
+                  <p className="mt-2.5 text-xs text-slate-400">
+                    {topic.solved} / {topic.total} problems solved
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+          
+        </div>
+
         <div className="rounded-xl border border-slate-800 bg-slate-900">
           <div className="flex items-center justify-between border-b border-slate-800 p-6">
             <h2 className="text-xl font-semibold">Recent Submissions</h2>
@@ -312,7 +373,6 @@ export default function DashboardPage() {
 
           )}
         </div>
-
 
         <div className="mt-8 flex flex-wrap gap-4">
           <Link

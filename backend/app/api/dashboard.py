@@ -14,16 +14,15 @@ def get_dashboard(db: Session = Depends(get_db), current_user: User = Depends(ge
     total_submissions = (db.query(func.count(Submission.id))
         .filter(Submission.user_id == current_user.id)
         .scalar()) or 0
-
+    
     accepted_submissions = (
         db.query(func.count(Submission.id))
-        .filter(Submission.user_id == current_user.id,
-            Submission.status == "Accepted")
+        .filter(Submission.user_id == current_user.id, Submission.status == "Accepted")
         .scalar()) or 0
 
-    problems_solved = (db.query(func.count(func.distinct(Submission.problem_id)))
-        .filter(Submission.user_id == current_user.id,
-                Submission.status == "Accepted")
+    problems_solved = (
+        db.query(func.count(func.distinct(Submission.problem_id)))
+        .filter(Submission.user_id == current_user.id, Submission.status == "Accepted")
         .scalar()) or 0
 
     if total_submissions > 0:
@@ -48,6 +47,52 @@ def get_dashboard(db: Session = Depends(get_db), current_user: User = Depends(ge
     for difficulty, count in difficulty_results:
         if difficulty in difficulty_stats:
             difficulty_stats[difficulty] = count
+
+    all_problems = db.query(Problem).all()
+
+    solved_problem_ids = {
+        row[0]
+        for row in (
+            db.query(Submission.problem_id)
+            .filter(Submission.user_id == current_user.id, Submission.status == "Accepted")
+            .distinct()
+            .all()
+        )
+    }
+
+    topic_stats = {}
+
+    for problem in all_problems:
+        if not problem.topics:
+            continue
+
+        topic_list = [
+            topic.strip()
+            for topic in problem.topics.split(",")
+            if topic.strip()
+        ]
+
+        for topic in topic_list:
+
+            if topic not in topic_stats:
+                topic_stats[topic] = {
+                    "topic": topic,
+                    "solved": 0,
+                    "total": 0,
+                    "progress": 0
+                }
+
+            topic_stats[topic]["total"] += 1
+
+            if problem.id in solved_problem_ids:
+                topic_stats[topic]["solved"] += 1
+
+    for topic in topic_stats.values():
+
+        if topic["total"] > 0:
+            topic["progress"] = round((topic["solved"] / topic["total"]) * 100, 2)
+
+    topic_stats = sorted(topic_stats.values(), key=lambda x: x["topic"].lower())
 
     recent_submissions = (
         db.query(Submission, Problem.title)
@@ -83,5 +128,6 @@ def get_dashboard(db: Session = Depends(get_db), current_user: User = Depends(ge
             "acceptance_rate": acceptance_rate
         },
         "difficulty_stats": difficulty_stats,
+        "topic_stats": topic_stats,
         "recent_submissions": recent_data
     }
