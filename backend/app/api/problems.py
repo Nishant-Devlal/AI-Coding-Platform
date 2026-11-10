@@ -3,6 +3,9 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.problem import Problem
 from app.schemas.problem import ProblemResponse
+from app.models.submission import Submission
+from app.models.user import User
+from app.api.auth import get_current_user
 
 router = APIRouter(prefix="/api/problems", tags=["Problems"])
 
@@ -35,6 +38,16 @@ def get_problems(topic: str = Query(None), difficulty: str = Query(None), search
                     if selected_topic in {t.strip().casefold() for t in (problem.topics or "").split(",")}]
         
     return problems
+
+@router.get("/solved")
+def get_solved_problems(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    solved_problem_ids = (
+        db.query(Submission.problem_id)
+        .filter(Submission.user_id == current_user.id, Submission.status == "Accepted")
+        .distinct()
+        .all())
+    
+    return {"solved_problem_ids": [row[0] for row in solved_problem_ids]}
 
 @router.get("/{problem_id}", response_model=ProblemResponse)
 def get_problem(problem_id: int, db: Session = Depends(get_db)):

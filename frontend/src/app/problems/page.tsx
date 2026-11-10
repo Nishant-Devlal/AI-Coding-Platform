@@ -18,6 +18,36 @@ export default function ProblemsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [solvedProblemIds, setSolvedProblemIds] = useState<number[]>([]);
+
+  useEffect(() => {
+    const fetchSolvedProblems = async () => {
+      try {
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+          return;
+        }
+        const response = await fetch(
+          "http://localhost:8000/api/problems/solved",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch solved problems");
+        }
+        const data = await response.json();
+        setSolvedProblemIds(data.solved_problem_ids);
+      }
+      catch (error) {
+        console.error("Solved problems error:", error);
+      }
+    };
+    fetchSolvedProblems();
+  }, []);
 
   useEffect(() => {
     const fetchTopics = async () => {
@@ -193,9 +223,16 @@ export default function ProblemsPage() {
                 className="block rounded-xl border border-slate-800 bg-slate-900 p-6 transition hover:border-slate-600 hover:bg-slate-800">
 
                 <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center gap-3">
                   <h2 className="text-xl font-semibold">
                     {problem.id}. {problem.title}
                   </h2>
+                  {solvedProblemIds.includes(problem.id) && (
+                    <span className="text-sm font-semibold text-green-400">
+                      ✔ Solved
+                    </span>
+                  )}
+                </div>
 
                   <span
                     className={`rounded-full px-3 py-1 text-sm ${
